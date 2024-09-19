@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const currentPage = window.location.pathname;
         // Attempt to match both absolute and relative URLs
         return songs.find(song => {
+            if (!song.pageUrl) return false;
             const songUrl = new URL(song.pageUrl, window.location.origin).href;
             const currentUrl = window.location.origin + currentPage;
             return songUrl === currentUrl || song.pageUrl === currentPage;
@@ -93,9 +94,14 @@ document.addEventListener("DOMContentLoaded", function() {
                 if(href){
                     const song = songs.find(s => {
                         // Ensure href comparison accounts for relative and absolute URLs
-                        const songUrl = new URL(s.pageUrl, window.location.origin).href;
-                        const linkUrl = new URL(href, window.location.origin).href;
-                        return songUrl === linkUrl;
+                        try {
+                            const songUrl = new URL(s.pageUrl, window.location.origin).href;
+                            const linkUrl = new URL(href, window.location.origin).href;
+                            return songUrl === linkUrl;
+                        } catch (e) {
+                            console.error("Invalid URL in song data or link:", e);
+                            return false;
+                        }
                     });
                     if(song){
                         trackClick(song.title);
@@ -170,9 +176,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const time = userBehavior.timeSpent[page];
             const pageGenres = publishedSongs.filter(song => {
                 // Compare song.pageUrl with the page
-                const songUrl = new URL(song.pageUrl, window.location.origin).href;
-                const currentUrl = window.location.origin + page;
-                return songUrl === currentUrl || song.pageUrl === page;
+                try {
+                    const songUrl = new URL(song.pageUrl, window.location.origin).href;
+                    const currentUrl = window.location.origin + page;
+                    return songUrl === currentUrl || song.pageUrl === page;
+                } catch (e) {
+                    console.error("Invalid URL comparison:", e);
+                    return false;
+                }
             }).map(song => song.genres.toLowerCase().split(",").map(g => g.trim())).flat();
 
             pageGenres.forEach(genre => {
@@ -308,38 +319,50 @@ document.addEventListener("DOMContentLoaded", function() {
         card.style.width = "300px"; // Business card size
         card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.display = "flex";
-        card.style.flexDirection = "column";
+        card.style.flexDirection = "row";
         card.style.alignItems = "center";
-        card.style.transition = "transform 0.3s ease";
+        card.style.transition = "transform 0.3s ease, width 0.3s ease";
 
         // Song image
         const img = document.createElement("img");
-        img.src = recommendedSong.coverImage || "https://via.placeholder.com/150";
+        img.src = recommendedSong.coverImage || "https://via.placeholder.com/80";
         img.alt = recommendedSong.title;
-        img.style.width = "100px";
-        img.style.height = "100px";
+        img.style.width = "80px";
+        img.style.height = "80px";
         img.style.objectFit = "cover";
         img.style.borderRadius = "50%";
-        img.style.marginBottom = "10px";
+        img.style.marginRight = "10px";
+
+        // Song details container
+        const details = document.createElement("div");
+        details.style.flexGrow = "1";
+        details.style.display = "flex";
+        details.style.flexDirection = "column";
+        details.style.justifyContent = "center";
 
         // Song title
-        const title = document.createElement("h3");
+        const title = document.createElement("h4");
         title.textContent = recommendedSong.title;
-        title.style.margin = "5px 0";
+        title.style.margin = "0";
+        title.style.fontSize = "16px";
 
         // Song motto
         const motto = document.createElement("p");
         motto.textContent = recommendedSong.motto;
         motto.style.fontStyle = "italic";
-        motto.style.textAlign = "center";
+        motto.style.margin = "5px 0 0 0";
+        motto.style.fontSize = "12px";
 
-        // Links container
-        const linksDiv = document.createElement("div");
-        linksDiv.style.display = "flex";
-        linksDiv.style.flexWrap = "wrap";
-        linksDiv.style.justifyContent = "center";
-        linksDiv.style.gap = "10px";
-        linksDiv.style.marginTop = "10px";
+        // Append title and motto to details
+        details.appendChild(title);
+        details.appendChild(motto);
+
+        // Action buttons container
+        const buttonsDiv = document.createElement("div");
+        buttonsDiv.style.display = "flex";
+        buttonsDiv.style.flexWrap = "wrap";
+        buttonsDiv.style.gap = "5px";
+        buttonsDiv.style.marginTop = "10px";
 
         /**
          * Helper function to create styled link buttons.
@@ -365,30 +388,31 @@ document.addEventListener("DOMContentLoaded", function() {
         // Add link buttons if URLs are present
         if(recommendedSong.playlist){
             const playlistLink = createLinkButton(recommendedSong.playlist, "Playlist", "#be3c10");
-            linksDiv.appendChild(playlistLink);
+            buttonsDiv.appendChild(playlistLink);
         }
         if(recommendedSong.spotify){
             const spotifyLink = createLinkButton(recommendedSong.spotify, "Spotify", "#1DB954");
-            linksDiv.appendChild(spotifyLink);
+            buttonsDiv.appendChild(spotifyLink);
         }
         if(recommendedSong.appleMusic){
             const appleLink = createLinkButton(recommendedSong.appleMusic, "Apple Music", "#FA233B");
-            linksDiv.appendChild(appleLink);
+            buttonsDiv.appendChild(appleLink);
         }
         if(recommendedSong.youtube){
             const youtubeLink = createLinkButton(recommendedSong.youtube, "YouTube", "#FF0000");
-            linksDiv.appendChild(youtubeLink);
+            buttonsDiv.appendChild(youtubeLink);
         }
         if(recommendedSong.pageUrl){
-            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Our Website", "#007BFF");
-            linksDiv.appendChild(pageLink);
+            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Website", "#007BFF");
+            buttonsDiv.appendChild(pageLink);
         }
 
-        // Append elements to card
+        // Append buttons to details
+        details.appendChild(buttonsDiv);
+
+        // Append image and details to card
         card.appendChild(img);
-        card.appendChild(title);
-        card.appendChild(motto);
-        card.appendChild(linksDiv);
+        card.appendChild(details);
 
         // Append card to container
         container.appendChild(card);
@@ -403,17 +427,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
         /**
          * Handle click on the recommendation container to expand or collapse.
-         * When expanded, the card moves further into view or changes its appearance.
+         * When expanded, the card expands to show more details or rearranges its layout.
          */
         container.addEventListener("click", function(){
             if(container.classList.contains("expanded")){
                 // Collapse the card back to partial view
                 container.style.transform = "translate(-100%, -50%)";
                 container.classList.remove("expanded");
+                // Optionally, remove expanded styles
+                card.style.flexDirection = "row";
+                card.style.width = "300px";
             } else {
                 // Expand the card fully into view
                 container.style.transform = "translate(0, -50%)";
                 container.classList.add("expanded");
+                // Modify styles for expanded view
+                card.style.flexDirection = "column";
+                card.style.width = "400px";
             }
         });
 
