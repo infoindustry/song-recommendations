@@ -1,11 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
+    // User behavior data structure
     const userBehavior = {
         pagesVisited: {},
         clicks: {},
         timeSpent: {}
     };
 
-    // Функция для извлечения жанров из JSON-LD схемы
+    /**
+     * Extract genres from JSON-LD schema present in the page.
+     * This helps in understanding the current page's genre for better recommendations.
+     */
     function getGenresFromSchema() {
         const scripts = document.querySelectorAll('script[type="application/ld+json"]');
         const genres = [];
@@ -20,46 +24,66 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }
             } catch(e){
-                console.error("Ошибка парсинга JSON-LD:", e);
+                console.error("Error parsing JSON-LD:", e);
             }
         }
         return genres;
     }
 
-    // Загрузка сохранённого поведения пользователя из sessionStorage
-    window.onload = function(){
+    /**
+     * Identify the current song based on the page URL.
+     * This ensures that the recommendation system doesn't suggest the same song the user is currently viewing.
+     */
+    function getCurrentSong(){
+        const currentPage = window.location.pathname;
+        // Attempt to match both absolute and relative URLs
+        return songs.find(song => {
+            const songUrl = new URL(song.pageUrl, window.location.origin).href;
+            const currentUrl = window.location.origin + currentPage;
+            return songUrl === currentUrl || song.pageUrl === currentPage;
+        });
+    }
+
+    /**
+     * Load user behavior data from sessionStorage.
+     * This persists user interactions within the same browsing session.
+     */
+    function loadUserBehavior(){
         const storedBehavior = sessionStorage.getItem("userBehavior");
         if(storedBehavior){
             Object.assign(userBehavior, JSON.parse(storedBehavior));
-            console.log("Загружено сохранённое поведение пользователя:", userBehavior);
+            console.log("Loaded user behavior:", userBehavior);
         }
-
-        window.pageStartTime = Date.now();
-
-        trackPageVisit();
-        setupClickTracking();
-        triggerRecommendation();
-    };
-
-    // Получение текущего пути страницы
-    function currentPage(){
-        return window.location.pathname;
     }
 
-    // Отслеживание посещения страницы
+    /**
+     * Save user behavior data to sessionStorage.
+     * This updates the stored data with the latest user interactions.
+     */
+    function saveUserBehavior(){
+        sessionStorage.setItem("userBehavior", JSON.stringify(userBehavior));
+        console.log("Saved user behavior:", userBehavior);
+    }
+
+    /**
+     * Track page visits by incrementing the visit count for the current page.
+     */
     function trackPageVisit(){
-        const page = currentPage();
+        const page = window.location.pathname;
         userBehavior.pagesVisited[page] = (userBehavior.pagesVisited[page] || 0) + 1;
-        console.log("Посещена страница:", page, "Общее количество посещений:", userBehavior.pagesVisited[page]);
+        console.log("Page visited:", page, "Total visits:", userBehavior.pagesVisited[page]);
         saveUserBehavior();
     }
 
-    // Настройка отслеживания кликов по ссылкам на песни
+    /**
+     * Setup click tracking using event delegation.
+     * This listens for clicks on any <a> tag and tracks them if they correspond to song URLs.
+     */
     function setupClickTracking(){
         document.body.addEventListener("click", function(event) {
             let target = event.target;
 
-            // Найти ближайший элемент <a>, если клик был по вложенному элементу
+            // Traverse up to find the nearest <a> tag
             while(target && target !== document.body && target.tagName !== 'A'){
                 target = target.parentElement;
             }
@@ -67,7 +91,12 @@ document.addEventListener("DOMContentLoaded", function() {
             if(target && target.tagName === 'A'){
                 const href = target.getAttribute('href');
                 if(href){
-                    const song = songs.find(s => s.pageUrl === href);
+                    const song = songs.find(s => {
+                        // Ensure href comparison accounts for relative and absolute URLs
+                        const songUrl = new URL(s.pageUrl, window.location.origin).href;
+                        const linkUrl = new URL(href, window.location.origin).href;
+                        return songUrl === linkUrl;
+                    });
                     if(song){
                         trackClick(song.title);
                     }
@@ -76,41 +105,48 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Отслеживание клика по песне
+    /**
+     * Track clicks on specific songs by incrementing their click count.
+     * @param {string} songTitle - The title of the song clicked.
+     */
     function trackClick(songTitle){
         if(userBehavior.clicks[songTitle]){
             userBehavior.clicks[songTitle] += 1;
         } else {
             userBehavior.clicks[songTitle] = 1;
         }
-        console.log("Клик по песне:", songTitle, "Количество кликов:", userBehavior.clicks[songTitle]);
+        console.log("Clicked on song:", songTitle, "Total clicks:", userBehavior.clicks[songTitle]);
         saveUserBehavior();
     }
 
-    // Сохранение поведения пользователя в sessionStorage
-    function saveUserBehavior(){
-        sessionStorage.setItem("userBehavior", JSON.stringify(userBehavior));
-        console.log("Сохранено поведение пользователя:", userBehavior);
-    }
-
-    // Отслеживание времени, проведённого на странице
-    window.addEventListener("beforeunload", function(){
-        const timeSpent = Math.floor((Date.now() - window.pageStartTime) / 1000); // в секундах
-        const page = currentPage();
+    /**
+     * Track the time spent on the current page.
+     * This increments the timeSpent for the page based on the duration the user stayed.
+     */
+    function trackTimeSpent(){
+        const timeSpent = Math.floor((Date.now() - window.pageStartTime) / 1000); // in seconds
+        const page = window.location.pathname;
         userBehavior.timeSpent[page] = (userBehavior.timeSpent[page] || 0) + timeSpent;
-        console.log("Время на странице:", page, "Время (секунды):", timeSpent, "Общее время:", userBehavior.timeSpent[page]);
+        console.log("Time spent on page:", page, "Time (seconds):", timeSpent, "Total time:", userBehavior.timeSpent[page]);
         saveUserBehavior();
-    });
+    }
 
-    // Функция рекомендации песни
+    /**
+     * Recommend a song based on user behavior and current page genres.
+     * The function calculates scores based on clicks and time spent to prioritize genres and needs.
+     * It also ensures that the current song isn't recommended again.
+     * 
+     * @param {Array} currentPageGenres - Genres extracted from the current page's schema.
+     * @returns {Object|null} - The recommended song object or null if no recommendation is possible.
+     */
     function recommendSong(currentPageGenres){
         const genreScores = {};
         const needScores = {};
 
         const publishedSongs = songs.filter(song => song.pageUrl);
-        console.log("Опубликованные песни:", publishedSongs);
+        console.log("Published songs:", publishedSongs);
 
-        // Оценка на основе кликов
+        // Score based on clicks
         for(const songTitle in userBehavior.clicks){
             const count = userBehavior.clicks[songTitle];
             const song = publishedSongs.find(s => s.title === songTitle);
@@ -129,25 +165,31 @@ document.addEventListener("DOMContentLoaded", function() {
         console.log("Genre Scores:", genreScores);
         console.log("Need Scores:", needScores);
 
-        // Оценка на основе времени, проведённого на страницах
+        // Score based on time spent
         for(const page in userBehavior.timeSpent){
             const time = userBehavior.timeSpent[page];
-            const pageGenres = publishedSongs.filter(song => song.pageUrl === page).map(song => song.genres.toLowerCase().split(",").map(g => g.trim())).flat();
+            const pageGenres = publishedSongs.filter(song => {
+                // Compare song.pageUrl with the page
+                const songUrl = new URL(song.pageUrl, window.location.origin).href;
+                const currentUrl = window.location.origin + page;
+                return songUrl === currentUrl || song.pageUrl === page;
+            }).map(song => song.genres.toLowerCase().split(",").map(g => g.trim())).flat();
+
             pageGenres.forEach(genre => {
                 genreScores[genre] = (genreScores[genre] || 0) + Math.floor(time / 60);
             });
         }
-        console.log("Genre Scores после времени:", genreScores);
+        console.log("Genre Scores after time:", genreScores);
 
-        // Оценка на основе текущих жанров страницы
+        // Score based on current page genres
         if(currentPageGenres.length > 0){
             currentPageGenres.forEach(genre => {
                 genreScores[genre] = (genreScores[genre] || 0) + 3;
             });
         }
-        console.log("Genre Scores после текущих жанров:", genreScores);
+        console.log("Genre Scores after current genres:", genreScores);
 
-        // Определение топового жанра
+        // Determine top genre
         let finalTopGenre = null;
         let highestGenreScore = -1;
         for(const genre in genreScores){
@@ -158,29 +200,35 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         console.log("Top Genre:", finalTopGenre, "Score:", highestGenreScore);
 
-        // Если нет топового жанра, выбрать случайную песню
+        // If no top genre, pick a random song excluding the current song
         if(!finalTopGenre){
-            const randomSong = publishedSongs[Math.floor(Math.random() * publishedSongs.length)];
-            console.log("Рандомная песня:", randomSong);
+            const randomSong = pickRandomSong(publishedSongs, getCurrentSong());
+            console.log("Random song selected:", randomSong);
             return randomSong;
         }
 
-        // Найти песни, соответствующие топовому жанру
+        // Find songs matching the top genre
         const matchingSongs = publishedSongs.filter(song => song.genres.toLowerCase().split(",").map(g => g.trim()).includes(finalTopGenre));
         console.log("Matching Songs:", matchingSongs);
 
-        // Если нет подходящих песен, выбрать случайную
+        // If no matching songs, pick a random song excluding the current song
         if(matchingSongs.length === 0){
-            const randomSong = publishedSongs[Math.floor(Math.random() * publishedSongs.length)];
-            console.log("Рандомная песня:", randomSong);
+            const randomSong = pickRandomSong(publishedSongs, getCurrentSong());
+            console.log("Random song selected (no matching songs):", randomSong);
             return randomSong;
         }
 
-        // Выбрать лучшую песню из matchingSongs на основе оценок
+        // Select the best song based on scores, excluding the current song
         let bestSong = null;
         let highestScore = -1;
 
         matchingSongs.forEach(song => {
+            // Exclude current song
+            const currentSong = getCurrentSong();
+            if(currentSong && song.title === currentSong.title){
+                return; // Skip current song
+            }
+
             const genres = song.genres.toLowerCase().split(",").map(g => g.trim());
             const needs = song.spiritualNeeds.toLowerCase().split(",").map(n => n.trim());
             let score = 0;
@@ -201,26 +249,44 @@ document.addEventListener("DOMContentLoaded", function() {
 
         console.log("Best Song:", bestSong, "Score:", highestScore);
 
-        // Если по каким-то причинам bestSong не найден, выбрать случайную
+        // If no best song found, pick random excluding the current song
         if(!bestSong){
-            bestSong = matchingSongs[Math.floor(Math.random() * matchingSongs.length)];
-            console.log("Рандомная песня из matchingSongs:", bestSong);
+            bestSong = pickRandomSong(matchingSongs, getCurrentSong());
+            console.log("Random song selected (bestSong not found):", bestSong);
         }
 
         return bestSong;
     }
 
-    // Функция отображения рекомендации
+    /**
+     * Pick a random song from a list, excluding the current song if provided.
+     * @param {Array} songList - List of songs to pick from.
+     * @param {Object|null} currentSong - The current song being viewed.
+     * @returns {Object|null} - A randomly selected song or null if no songs are available.
+     */
+    function pickRandomSong(songList, currentSong){
+        const filteredSongs = currentSong ? songList.filter(song => song.title !== currentSong.title) : songList;
+        if(filteredSongs.length === 0){
+            return null; // No songs to pick
+        }
+        const randomIndex = Math.floor(Math.random() * filteredSongs.length);
+        return filteredSongs[randomIndex];
+    }
+
+    /**
+     * Display the recommendation overlay with the recommended song details.
+     * @param {Object} recommendedSong - The song object to be recommended.
+     */
     function showRecommendation(recommendedSong){
-        console.log("Функция showRecommendation вызвана с песней:", recommendedSong);
-        
-        // Проверка, была ли рекомендация уже показана на этой странице
+        console.log("showRecommendation called with song:", recommendedSong);
+
+        // Check if recommendation is already shown
         if(sessionStorage.getItem("songRecommendationShown")){
-            console.log("Рекомендация уже показана на этой странице.");
+            console.log("Recommendation already shown on this page.");
             return;
         }
 
-        // Создание оверлея
+        // Create overlay
         const overlay = document.createElement("div");
         overlay.id = "song-recommendation-overlay";
         overlay.style.position = "fixed";
@@ -234,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function() {
         overlay.style.alignItems = "center";
         overlay.style.zIndex = "1000";
 
-        // Создание карточки рекомендации
+        // Create recommendation card
         const card = document.createElement("div");
         card.id = "song-recommendation-card";
         card.style.backgroundColor = "#021124";
@@ -246,7 +312,7 @@ document.addEventListener("DOMContentLoaded", function() {
         card.style.position = "relative";
         card.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.3)";
 
-        // Кнопка закрытия
+        // Close button
         const closeBtn = document.createElement("span");
         closeBtn.innerHTML = "&times;";
         closeBtn.style.position = "absolute";
@@ -258,31 +324,37 @@ document.addEventListener("DOMContentLoaded", function() {
             document.body.removeChild(overlay);
         });
 
-        // Изображение песни
+        // Song image
         const img = document.createElement("img");
         img.src = recommendedSong.coverImage || "https://via.placeholder.com/150";
         img.alt = recommendedSong.title;
         img.style.width = "100%";
         img.style.borderRadius = "10px";
 
-        // Название песни
+        // Song title
         const title = document.createElement("h2");
         title.textContent = recommendedSong.title;
         title.style.marginTop = "15px";
 
-        // Девиз песни
+        // Song motto
         const motto = document.createElement("p");
         motto.textContent = recommendedSong.motto;
         motto.style.fontStyle = "italic";
 
-        // Блок с ссылками
+        // Links block
         const linksDiv = document.createElement("div");
         linksDiv.style.marginTop = "15px";
         linksDiv.style.display = "flex";
         linksDiv.style.flexWrap = "wrap";
         linksDiv.style.gap = "10px";
 
-        // Функция для создания кнопок-ссылок
+        /**
+         * Helper function to create styled link buttons.
+         * @param {string} url - The URL the button should link to.
+         * @param {string} text - The display text of the button.
+         * @param {string} bgColor - The background color of the button.
+         * @returns {HTMLElement} - The created anchor element styled as a button.
+         */
         function createLinkButton(url, text, bgColor){
             const link = document.createElement("a");
             link.href = url;
@@ -298,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return link;
         }
 
-        // Добавление кнопок-ссылок, если они существуют и опубликованы
+        // Add link buttons if URLs are present
         if(recommendedSong.playlist){
             const playlistLink = createLinkButton(recommendedSong.playlist, "Playlist", "#be3c10");
             linksDiv.appendChild(playlistLink);
@@ -320,35 +392,66 @@ document.addEventListener("DOMContentLoaded", function() {
             linksDiv.appendChild(pageLink);
         }
 
-        // Добавление элементов в карточку
+        // Append elements to card
         card.appendChild(closeBtn);
         card.appendChild(img);
         card.appendChild(title);
         card.appendChild(motto);
         card.appendChild(linksDiv);
 
+        // Append card to overlay
         overlay.appendChild(card);
+
+        // Append overlay to body
         document.body.appendChild(overlay);
 
-        // Установка флага, чтобы не показывать рекомендацию повторно на этой странице
+        // Set flag to not show recommendation again on this page
         sessionStorage.setItem("songRecommendationShown", "true");
-        console.log("Рекомендация показана:", recommendedSong.title);
+        console.log("Recommendation shown:", recommendedSong.title);
     }
 
-    // Функция запуска рекомендации с задержкой
+    /**
+     * Trigger the recommendation after a specified delay.
+     * This function ensures that recommendations are shown only once per page visit.
+     */
     function triggerRecommendation(){
-        const delay = 5000; // Задержка 5 секунд
-        console.log("Запуск рекомендации через", delay, "мс");
+        const delay = 5000; // 5 seconds delay
+        console.log("Triggering recommendation in", delay, "ms");
         setTimeout(() => {
             const currentPageGenres = getGenresFromSchema();
-            console.log("Текущие жанры страницы:", currentPageGenres);
+            console.log("Current page genres:", currentPageGenres);
             const recommendedSong = recommendSong(currentPageGenres);
-            console.log("Рекомендованная песня:", recommendedSong);
+            console.log("Recommended song:", recommendedSong);
             if(recommendedSong){
                 showRecommendation(recommendedSong);
             }
         }, delay);
     }
 
-    // Функция рекомендации может быть расширена для более сложной логики
+    /**
+     * Reset the recommendation flag after 24 hours.
+     * This allows recommendations to be shown again after a day.
+     */
+    function resetRecommendationFlag(){
+        sessionStorage.removeItem("songRecommendationShown");
+        console.log("Recommendation flag reset.");
+    }
+
+    /**
+     * Initialize the recommendation system by loading user behavior,
+     * tracking the current page, setting up click tracking, and triggering recommendations.
+     */
+    function initialize(){
+        loadUserBehavior();
+        window.pageStartTime = Date.now(); // Start tracking time on page
+        trackPageVisit();
+        setupClickTracking();
+        triggerRecommendation();
+        window.addEventListener("beforeunload", trackTimeSpent);
+        // Set timeout to reset the recommendation flag every 24 hours
+        setTimeout(resetRecommendationFlag, 24 * 60 * 60 * 1000); // 24 hours
+    }
+
+    // Start the initialization process
+    initialize();
 });
