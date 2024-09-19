@@ -316,7 +316,7 @@ document.addEventListener("DOMContentLoaded", function() {
             linksDiv.appendChild(youtubeLink);
         }
         if(recommendedSong.pageUrl){
-            const pageLink = createLinkButton(recommendedSong.pageUrl, "Смотреть на сайте", "#007BFF");
+            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on our website", "#007BFF");
             linksDiv.appendChild(pageLink);
         }
 
