@@ -274,7 +274,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     /**
-     * Display the recommendation overlay with the recommended song details.
+     * Display the recommendation card with smooth sliding animation.
+     * The card appears from the left side and can be clicked to fully expand.
      * @param {Object} recommendedSong - The song object to be recommended.
      */
     function showRecommendation(recommendedSong){
@@ -286,67 +287,59 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        // Create overlay
-        const overlay = document.createElement("div");
-        overlay.id = "song-recommendation-overlay";
-        overlay.style.position = "fixed";
-        overlay.style.top = "0";
-        overlay.style.left = "0";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-        overlay.style.display = "flex";
-        overlay.style.justifyContent = "center";
-        overlay.style.alignItems = "center";
-        overlay.style.zIndex = "1000";
+        // Create recommendation container
+        const container = document.createElement("div");
+        container.id = "song-recommendation-container";
+        container.style.position = "fixed";
+        container.style.top = "50%";
+        container.style.left = "0";
+        container.style.transform = "translate(-100%, -50%)"; // Initially hidden off-screen
+        container.style.transition = "transform 0.5s ease";
+        container.style.zIndex = "1001";
+        container.style.cursor = "pointer";
 
         // Create recommendation card
         const card = document.createElement("div");
         card.id = "song-recommendation-card";
         card.style.backgroundColor = "#021124";
-        card.style.padding = "20px";
-        card.style.borderRadius = "10px";
-        card.style.width = "90%";
-        card.style.maxWidth = "400px";
+        card.style.padding = "15px";
+        card.style.borderRadius = "10px 0 0 10px";
         card.style.color = "#FFFFFF";
-        card.style.position = "relative";
-        card.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.3)";
-
-        // Close button
-        const closeBtn = document.createElement("span");
-        closeBtn.innerHTML = "&times;";
-        closeBtn.style.position = "absolute";
-        closeBtn.style.top = "10px";
-        closeBtn.style.right = "20px";
-        closeBtn.style.fontSize = "30px";
-        closeBtn.style.cursor = "pointer";
-        closeBtn.addEventListener("click", () => {
-            document.body.removeChild(overlay);
-        });
+        card.style.width = "300px"; // Business card size
+        card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
+        card.style.display = "flex";
+        card.style.flexDirection = "column";
+        card.style.alignItems = "center";
+        card.style.transition = "transform 0.3s ease";
 
         // Song image
         const img = document.createElement("img");
         img.src = recommendedSong.coverImage || "https://via.placeholder.com/150";
         img.alt = recommendedSong.title;
-        img.style.width = "100%";
-        img.style.borderRadius = "10px";
+        img.style.width = "100px";
+        img.style.height = "100px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "50%";
+        img.style.marginBottom = "10px";
 
         // Song title
-        const title = document.createElement("h2");
+        const title = document.createElement("h3");
         title.textContent = recommendedSong.title;
-        title.style.marginTop = "15px";
+        title.style.margin = "5px 0";
 
         // Song motto
         const motto = document.createElement("p");
         motto.textContent = recommendedSong.motto;
         motto.style.fontStyle = "italic";
+        motto.style.textAlign = "center";
 
-        // Links block
+        // Links container
         const linksDiv = document.createElement("div");
-        linksDiv.style.marginTop = "15px";
         linksDiv.style.display = "flex";
         linksDiv.style.flexWrap = "wrap";
+        linksDiv.style.justifyContent = "center";
         linksDiv.style.gap = "10px";
+        linksDiv.style.marginTop = "10px";
 
         /**
          * Helper function to create styled link buttons.
@@ -362,11 +355,10 @@ document.addEventListener("DOMContentLoaded", function() {
             link.textContent = text;
             link.style.backgroundColor = bgColor;
             link.style.color = "#FFFFFF";
-            link.style.padding = "10px";
+            link.style.padding = "5px 10px";
             link.style.borderRadius = "5px";
             link.style.textDecoration = "none";
-            link.style.flex = "1 1 calc(50% - 20px)";
-            link.style.textAlign = "center";
+            link.style.fontSize = "12px";
             return link;
         }
 
@@ -388,22 +380,47 @@ document.addEventListener("DOMContentLoaded", function() {
             linksDiv.appendChild(youtubeLink);
         }
         if(recommendedSong.pageUrl){
-            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on our website", "#007BFF");
+            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Our Website", "#007BFF");
             linksDiv.appendChild(pageLink);
         }
 
         // Append elements to card
-        card.appendChild(closeBtn);
         card.appendChild(img);
         card.appendChild(title);
         card.appendChild(motto);
         card.appendChild(linksDiv);
 
-        // Append card to overlay
-        overlay.appendChild(card);
+        // Append card to container
+        container.appendChild(card);
 
-        // Append overlay to body
-        document.body.appendChild(overlay);
+        // Append container to body
+        document.body.appendChild(container);
+
+        // Trigger the slide-in animation
+        setTimeout(() => {
+            container.style.transform = "translate(0, -50%)"; // Slide in
+        }, 100); // Slight delay to ensure transition
+
+        /**
+         * Handle click on the recommendation container to expand or collapse.
+         * When expanded, the card moves further into view or changes its appearance.
+         */
+        container.addEventListener("click", function(){
+            if(container.classList.contains("expanded")){
+                // Collapse the card back to partial view
+                container.style.transform = "translate(-100%, -50%)";
+                container.classList.remove("expanded");
+            } else {
+                // Expand the card fully into view
+                container.style.transform = "translate(0, -50%)";
+                container.classList.add("expanded");
+            }
+        });
+
+        // Prevent clicking inside the card from triggering the container's click event
+        card.addEventListener("click", function(event){
+            event.stopPropagation();
+        });
 
         // Set flag to not show recommendation again on this page
         sessionStorage.setItem("songRecommendationShown", "true");
