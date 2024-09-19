@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
     /**
      * Extract genres from JSON-LD schema present in the page.
      * This helps in understanding the current page's genre for better recommendations.
+     * @returns {Array} - Array of genres in lowercase.
      */
     function getGenresFromSchema() {
         const scripts = document.querySelectorAll('script[type="application/ld+json"]');
@@ -33,15 +34,21 @@ document.addEventListener("DOMContentLoaded", function() {
     /**
      * Identify the current song based on the page URL.
      * This ensures that the recommendation system doesn't suggest the same song the user is currently viewing.
+     * @returns {Object|null} - The current song object or null if not found.
      */
     function getCurrentSong(){
         const currentPage = window.location.pathname;
         // Attempt to match both absolute and relative URLs
         return songs.find(song => {
             if (!song.pageUrl) return false;
-            const songUrl = new URL(song.pageUrl, window.location.origin).href;
-            const currentUrl = window.location.origin + currentPage;
-            return songUrl === currentUrl || song.pageUrl === currentPage;
+            try {
+                const songUrl = new URL(song.pageUrl, window.location.origin).href;
+                const currentUrl = window.location.origin + currentPage;
+                return songUrl === currentUrl || song.pageUrl === currentPage;
+            } catch (e) {
+                console.error("Invalid URL in song data:", e);
+                return false;
+            }
         });
     }
 
@@ -312,26 +319,26 @@ document.addEventListener("DOMContentLoaded", function() {
         // Create recommendation card
         const card = document.createElement("div");
         card.id = "song-recommendation-card";
-        card.style.backgroundColor = "#021124";
-        card.style.padding = "15px";
-        card.style.borderRadius = "10px 0 0 10px";
+        card.style.backgroundColor = "#242424"; // Updated background color
+        card.style.padding = "20px";
+        card.style.borderRadius = "10px";
+        card.style.width = "350px"; // Increased size
         card.style.color = "#FFFFFF";
-        card.style.width = "300px"; // Business card size
-        card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.display = "flex";
         card.style.flexDirection = "row";
         card.style.alignItems = "center";
+        card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.transition = "transform 0.3s ease, width 0.3s ease";
 
         // Song image
         const img = document.createElement("img");
-        img.src = recommendedSong.coverImage || "https://via.placeholder.com/80";
+        img.src = recommendedSong.coverImage || "https://via.placeholder.com/100";
         img.alt = recommendedSong.title;
-        img.style.width = "80px";
-        img.style.height = "80px";
+        img.style.width = "100px";
+        img.style.height = "100px";
         img.style.objectFit = "cover";
         img.style.borderRadius = "50%";
-        img.style.marginRight = "10px";
+        img.style.marginRight = "15px";
 
         // Song details container
         const details = document.createElement("div");
@@ -341,27 +348,23 @@ document.addEventListener("DOMContentLoaded", function() {
         details.style.justifyContent = "center";
 
         // Song title
-        const title = document.createElement("h4");
+        const title = document.createElement("h3");
         title.textContent = recommendedSong.title;
         title.style.margin = "0";
-        title.style.fontSize = "16px";
+        title.style.fontSize = "18px";
 
         // Song motto
         const motto = document.createElement("p");
         motto.textContent = recommendedSong.motto;
         motto.style.fontStyle = "italic";
         motto.style.margin = "5px 0 0 0";
-        motto.style.fontSize = "12px";
-
-        // Append title and motto to details
-        details.appendChild(title);
-        details.appendChild(motto);
+        motto.style.fontSize = "14px";
 
         // Action buttons container
         const buttonsDiv = document.createElement("div");
         buttonsDiv.style.display = "flex";
         buttonsDiv.style.flexWrap = "wrap";
-        buttonsDiv.style.gap = "5px";
+        buttonsDiv.style.gap = "10px";
         buttonsDiv.style.marginTop = "10px";
 
         /**
@@ -378,7 +381,7 @@ document.addEventListener("DOMContentLoaded", function() {
             link.textContent = text;
             link.style.backgroundColor = bgColor;
             link.style.color = "#FFFFFF";
-            link.style.padding = "5px 10px";
+            link.style.padding = "8px 12px";
             link.style.borderRadius = "5px";
             link.style.textDecoration = "none";
             link.style.fontSize = "12px";
@@ -407,7 +410,9 @@ document.addEventListener("DOMContentLoaded", function() {
             buttonsDiv.appendChild(pageLink);
         }
 
-        // Append buttons to details
+        // Append title and motto to details
+        details.appendChild(title);
+        details.appendChild(motto);
         details.appendChild(buttonsDiv);
 
         // Append image and details to card
@@ -420,30 +425,30 @@ document.addEventListener("DOMContentLoaded", function() {
         // Append container to body
         document.body.appendChild(container);
 
-        // Trigger the slide-in animation
+        // Trigger the slide-in animation after a slight delay to ensure transition
         setTimeout(() => {
             container.style.transform = "translate(0, -50%)"; // Slide in
-        }, 100); // Slight delay to ensure transition
+        }, 100); // 100ms delay
 
         /**
          * Handle click on the recommendation container to expand or collapse.
-         * When expanded, the card expands to show more details or rearranges its layout.
+         * When expanded, the card reveals more details or rearranges its layout.
          */
         container.addEventListener("click", function(){
             if(container.classList.contains("expanded")){
                 // Collapse the card back to partial view
                 container.style.transform = "translate(-100%, -50%)";
                 container.classList.remove("expanded");
-                // Optionally, remove expanded styles
+                // Reset card styles to original state
                 card.style.flexDirection = "row";
-                card.style.width = "300px";
+                card.style.width = "350px";
             } else {
                 // Expand the card fully into view
                 container.style.transform = "translate(0, -50%)";
                 container.classList.add("expanded");
                 // Modify styles for expanded view
                 card.style.flexDirection = "column";
-                card.style.width = "400px";
+                card.style.width = "500px"; // Increased size for expanded view
             }
         });
 
@@ -458,11 +463,25 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     /**
-     * Trigger the recommendation after a specified delay.
-     * This function ensures that recommendations are shown only once per page visit.
+     * Trigger the recommendation after certain user interactions.
+     * This function ensures that recommendations are shown only when enough data is collected.
      */
     function triggerRecommendation(){
-        const delay = 5000; // 5 seconds delay
+        // Define thresholds for displaying recommendations
+        const minPagesVisited = 3;
+        const minSongsClicked = 2;
+
+        // Check if thresholds are met
+        const totalPagesVisited = Object.values(userBehavior.pagesVisited).reduce((a, b) => a + b, 0);
+        const totalSongsClicked = Object.values(userBehavior.clicks).reduce((a, b) => a + b, 0);
+
+        if(totalPagesVisited < minPagesVisited || totalSongsClicked < minSongsClicked){
+            console.log("Not enough user interactions yet. Recommendations will not be shown.");
+            return;
+        }
+
+        // Define a delay before showing the recommendation
+        const delay = 5000; // 5 seconds
         console.log("Triggering recommendation in", delay, "ms");
         setTimeout(() => {
             const currentPageGenres = getGenresFromSchema();
