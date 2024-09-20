@@ -330,6 +330,7 @@ document.addEventListener("DOMContentLoaded", function() {
         card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.transition = "transform 0.3s ease, width 0.3s ease";
         card.style.position = "relative";
+        card.style.boxSizing = "border-box";
 
         // Close button
         const closeBtn = document.createElement("span");
@@ -410,6 +411,8 @@ document.addEventListener("DOMContentLoaded", function() {
             link.style.borderRadius = "5px";
             link.style.textDecoration = "none";
             link.style.fontSize = "12px";
+            link.style.textAlign = "center";
+            link.style.flex = "1 1 auto";
             return link;
         }
 
@@ -459,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         /**
          * Handle click on the recommendation container to expand or collapse.
-         * When expanded, the card reveals more details or rearranges its layout.
+         * When expanded, the card rearranges its layout for better visibility.
          */
         container.addEventListener("click", function(){
             if(container.classList.contains("expanded")){
@@ -469,6 +472,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Reset card styles to original state
                 card.style.flexDirection = "row";
                 card.style.width = "400px";
+                infoMessage.style.display = "block";
             } else {
                 // Expand the card fully into view
                 container.style.transform = "translate(0, -50%)";
@@ -476,6 +480,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Modify styles for expanded view
                 card.style.flexDirection = "column";
                 card.style.width = "500px"; // Increased size for expanded view
+                infoMessage.style.display = "none"; // Hide the message when expanded
             }
         });
 
