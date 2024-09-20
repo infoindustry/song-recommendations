@@ -371,7 +371,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Informative message
         const infoMessage = document.createElement("p");
-        infoMessage.textContent = "Мы думаем, вам понравится:";
+        infoMessage.textContent = "We think you'll like it:";
         infoMessage.style.margin = "0 0 10px 0";
         infoMessage.style.fontSize = "16px";
         infoMessage.style.color = "#AAAAAA";
