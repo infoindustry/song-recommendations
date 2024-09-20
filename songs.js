@@ -488,11 +488,11 @@ const songs = [
     "spiritualNeeds": " Facing eternal decisions, need for understanding consequences, desire for salvation",
     "motto": " \"Your eternal address - you decide!\"",
     "keywords": " decision, consequences, eternity, urgency, destiny, future, salvation, opportunity, responsibility, wisdom, accountability, choice ",
-    "playlist": null,
-    "appleMusic": null,
-    "spotify": null,
-    "youtube": null,
-    "pageUrl": null,
+    "playlist": "https://www.youtube.com/watch?v=cdijqspVxYE&list=PLck0FjnEKceKhKKQLzOeFTSNZc0FOB0WK",
+    "appleMusic": "https://music.apple.com/us/album/heaven-or-hell/1765847561?i=1765847565",
+    "spotify": "https://open.spotify.com/album/6xV3RxsM4piih6aG4Tmils",
+    "youtube": "https://www.youtube.com/channel/UCKaajesFMCG06biWPe1z1kg",
+    "pageUrl": "https://lionheartrevival.com/heaven-or-hell",
     "coverImage": "https://d3flpus5evl89n.cloudfront.net/66e714e4cef46462a8685874/66e729ffcef46462a8686309/scaled_640.jpg"
   },
   {
