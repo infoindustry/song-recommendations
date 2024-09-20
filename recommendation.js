@@ -309,7 +309,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     /**
      * Display the recommendation card with smooth sliding animation.
-     * The card appears from the right side and can be clicked to fully expand.
+     * The card appears from the bottom on mobile devices for better visibility.
      * @param {Object} recommendedSong - The song object to be recommended.
      */
     function showRecommendation(recommendedSong){
@@ -327,30 +327,31 @@ document.addEventListener("DOMContentLoaded", function() {
         const container = document.createElement("div");
         container.id = "song-recommendation-container";
         container.style.position = "fixed";
-        container.style.top = "10%";
-        container.style.right = "0";
-        container.style.transform = "translateX(100%)"; // Initially hidden off-screen to the right
+        container.style.bottom = "0"; // Position at the bottom for better visibility on mobile
+        container.style.left = "50%";
+        container.style.transform = "translateX(-50%) translateY(100%)"; // Initially hidden below the screen
         container.style.transition = "transform 0.5s ease";
         container.style.zIndex = "1001";
-        container.style.cursor = "pointer";
-        container.style.width = "350px"; // Set a fixed width
+        container.style.width = "90%"; // Full width on mobile
+        container.style.maxWidth = "400px"; // Maximum width for larger screens
         container.style.boxSizing = "border-box";
+        container.style.padding = "10px";
 
         // Create recommendation card
         const card = document.createElement("div");
         card.id = "song-recommendation-card";
         card.style.backgroundColor = "#242424"; // Updated background color
-        card.style.padding = "20px";
+        card.style.padding = "15px";
         card.style.borderRadius = "10px";
         card.style.width = "100%"; // Full width of container
         card.style.color = "#FFFFFF";
         card.style.display = "flex";
-        card.style.flexDirection = "column"; // Column layout for business card style
+        card.style.flexDirection = "column"; // Column layout for better mobile display
         card.style.alignItems = "flex-start";
         card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
-        card.style.transition = "transform 0.3s ease, width 0.3s ease";
         card.style.position = "relative";
         card.style.boxSizing = "border-box";
+        card.style.animation = "slideIn 0.5s ease";
 
         // Close button
         const closeBtn = document.createElement("span");
@@ -361,7 +362,8 @@ document.addEventListener("DOMContentLoaded", function() {
         closeBtn.style.fontSize = "24px";
         closeBtn.style.cursor = "pointer";
         closeBtn.style.color = "#FFFFFF";
-        closeBtn.title = "Закрыть рекомендацию";
+        closeBtn.title = "Close Recommendation";
+        closeBtn.setAttribute("aria-label", "Close Recommendation");
         closeBtn.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent triggering container's click
             document.body.removeChild(container);
@@ -390,8 +392,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const img = document.createElement("img");
         img.src = recommendedSong.coverImage || "https://via.placeholder.com/100";
         img.alt = recommendedSong.title;
-        img.style.width = "100px";
-        img.style.height = "100px";
+        img.style.width = "80px";
+        img.style.height = "80px";
         img.style.objectFit = "cover";
         img.style.borderRadius = "10px";
         img.style.marginRight = "15px";
@@ -441,19 +443,19 @@ document.addEventListener("DOMContentLoaded", function() {
             link.style.textDecoration = "none";
             link.style.fontSize = "12px";
             link.style.textAlign = "center";
-            link.style.flex = "1 1 auto";
+            link.style.flex = "1 1 45%"; // Adjusted for better fit on mobile
             link.style.display = "flex";
             link.style.alignItems = "center";
             link.style.justifyContent = "center";
 
             if(iconUrl){
-                const img = document.createElement("img");
-                img.src = iconUrl;
-                img.alt = text;
-                img.style.width = "20px";
-                img.style.height = "20px";
-                img.style.marginRight = "8px";
-                link.appendChild(img);
+                const icon = document.createElement("img");
+                icon.src = iconUrl;
+                icon.alt = `${text} Icon`;
+                icon.style.width = "20px";
+                icon.style.height = "20px";
+                icon.style.marginRight = "8px";
+                link.appendChild(icon);
             }
 
             const span = document.createElement("span");
@@ -464,24 +466,49 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // Add link buttons with icons if URLs are present
-        if(recommendedSong.playlist){
-            const playlistLink = createLinkButton(recommendedSong.playlist, "Playlist", "#be3c10", "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png"); // YouTube Icon
-            buttonsDiv.appendChild(playlistLink);
+        if(recommendedSong.youtube){
+            const youtubeLink = createLinkButton(
+                recommendedSong.youtube,
+                "YouTube",
+                "#FF0000",
+                "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png" // YouTube Icon
+            );
+            buttonsDiv.appendChild(youtubeLink);
         }
         if(recommendedSong.spotify){
-            const spotifyLink = createLinkButton(recommendedSong.spotify, "Spotify", "#1DB954", "https://static.tildacdn.com/tild3066-3236-4166-b833-323236643035/5.png"); // Spotify Icon
+            const spotifyLink = createLinkButton(
+                recommendedSong.spotify,
+                "Spotify",
+                "#1DB954",
+                "https://static.tildacdn.com/tild3066-3236-4166-b833-323236643035/5.png" // Spotify Icon
+            );
             buttonsDiv.appendChild(spotifyLink);
         }
         if(recommendedSong.appleMusic){
-            const appleLink = createLinkButton(recommendedSong.appleMusic, "Apple Music", "#FA233B", "https://static.tildacdn.com/tild3962-3032-4035-b862-643064333464/1.png"); // Apple Music Icon
+            const appleLink = createLinkButton(
+                recommendedSong.appleMusic,
+                "Apple Music",
+                "#FA233B",
+                "https://static.tildacdn.com/tild3962-3032-4035-b862-643064333464/1.png" // Apple Music Icon
+            );
             buttonsDiv.appendChild(appleLink);
         }
-        if(recommendedSong.youtube){
-            const youtubeLink = createLinkButton(recommendedSong.youtube, "YouTube", "#FF0000", "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png"); // YouTube Icon
-            buttonsDiv.appendChild(youtubeLink);
+        if(recommendedSong.playlist){
+            const playlistLink = createLinkButton(
+                recommendedSong.playlist,
+                "Playlist",
+                "#be3c10",
+                "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png" // YouTube Icon as example
+            );
+            buttonsDiv.appendChild(playlistLink);
         }
         if(recommendedSong.pageUrl){
-            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Website", "#007BFF", null); // No icon for website link
+            const pageLink = createLinkButton(
+                recommendedSong.pageUrl,
+                "See on Website",
+                "#007BFF",
+                null // No icon for website link
+            );
             buttonsDiv.appendChild(pageLink);
         }
 
@@ -507,7 +534,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Trigger the slide-in animation after a slight delay to ensure transition
         setTimeout(() => {
-            container.style.transform = "translateX(0)"; // Slide in
+            container.style.transform = "translateX(-50%) translateY(0)"; // Slide in
         }, 100); // 100ms delay
 
         /**
@@ -517,19 +544,19 @@ document.addEventListener("DOMContentLoaded", function() {
         container.addEventListener("click", function(){
             if(container.classList.contains("expanded")){
                 // Collapse the card back to partial view
-                container.style.transform = "translateX(100%)";
+                container.style.transform = "translateX(-50%) translateY(100%)";
                 container.classList.remove("expanded");
                 // Reset card styles to original state
                 card.style.flexDirection = "column";
-                card.style.width = "350px";
+                card.style.width = "100%";
                 infoMessage.style.display = "block";
             } else {
                 // Expand the card fully into view
-                container.style.transform = "translateX(0)";
+                container.style.transform = "translateX(-50%) translateY(0)";
                 container.classList.add("expanded");
                 // Modify styles for expanded view
                 card.style.flexDirection = "column";
-                card.style.width = "500px"; // Increased size for expanded view
+                card.style.width = "100%"; // Full width on mobile
                 infoMessage.style.display = "none"; // Hide the message when expanded
             }
         });
