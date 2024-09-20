@@ -322,13 +322,38 @@ document.addEventListener("DOMContentLoaded", function() {
         card.style.backgroundColor = "#242424"; // Updated background color
         card.style.padding = "20px";
         card.style.borderRadius = "10px";
-        card.style.width = "350px"; // Increased size
+        card.style.width = "400px"; // Increased size
         card.style.color = "#FFFFFF";
         card.style.display = "flex";
         card.style.flexDirection = "row";
         card.style.alignItems = "center";
         card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.transition = "transform 0.3s ease, width 0.3s ease";
+        card.style.position = "relative";
+
+        // Close button
+        const closeBtn = document.createElement("span");
+        closeBtn.innerHTML = "&times;";
+        closeBtn.style.position = "absolute";
+        closeBtn.style.top = "10px";
+        closeBtn.style.right = "15px";
+        closeBtn.style.fontSize = "24px";
+        closeBtn.style.cursor = "pointer";
+        closeBtn.style.color = "#FFFFFF";
+        closeBtn.title = "Close Recommendation";
+        closeBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering container's click
+            document.body.removeChild(container);
+            sessionStorage.setItem("songRecommendationShown", "true");
+            console.log("Recommendation closed by user.");
+        });
+
+        // Informative message
+        const infoMessage = document.createElement("p");
+        infoMessage.textContent = "We think you'll like this!";
+        infoMessage.style.margin = "0 0 10px 0";
+        infoMessage.style.fontSize = "14px";
+        infoMessage.style.color = "#AAAAAA";
 
         // Song image
         const img = document.createElement("img");
@@ -337,7 +362,7 @@ document.addEventListener("DOMContentLoaded", function() {
         img.style.width = "100px";
         img.style.height = "100px";
         img.style.objectFit = "cover";
-        img.style.borderRadius = "50%";
+        img.style.borderRadius = "10px";
         img.style.marginRight = "15px";
 
         // Song details container
@@ -415,7 +440,9 @@ document.addEventListener("DOMContentLoaded", function() {
         details.appendChild(motto);
         details.appendChild(buttonsDiv);
 
-        // Append image and details to card
+        // Append info message, image, and details to card
+        card.appendChild(closeBtn);
+        card.appendChild(infoMessage);
         card.appendChild(img);
         card.appendChild(details);
 
@@ -441,7 +468,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 container.classList.remove("expanded");
                 // Reset card styles to original state
                 card.style.flexDirection = "row";
-                card.style.width = "350px";
+                card.style.width = "400px";
             } else {
                 // Expand the card fully into view
                 container.style.transform = "translate(0, -50%)";
