@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     });
                     if(song){
                         trackClick(song.title);
+                        handleRecommendationClick(song); // Push GA event if needed
                     }
                 }
             }
@@ -130,6 +131,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         console.log("Clicked on song:", songTitle, "Total clicks:", userBehavior.clicks[songTitle]);
         saveUserBehavior();
+    }
+
+    /**
+     * Handle click events on the recommendation card.
+     * Pushes a 'recommendation_clicked' event to dataLayer for GA tracking.
+     * @param {Object} song - The song object that was clicked.
+     */
+    function handleRecommendationClick(song) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+            'event': 'recommendation_clicked',
+            'songTitle': song.title,
+            'songGenre': song.genres,
+            'songId': song.id
+        });
     }
 
     /**
@@ -293,15 +309,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     /**
      * Display the recommendation card with smooth sliding animation.
-     * The card appears from the left side and can be clicked to fully expand.
+     * The card appears from the right side and can be clicked to fully expand.
      * @param {Object} recommendedSong - The song object to be recommended.
      */
     function showRecommendation(recommendedSong){
         console.log("showRecommendation called with song:", recommendedSong);
 
-        // Check if recommendation is already shown
-        if(sessionStorage.getItem("songRecommendationShown")){
-            console.log("Recommendation already shown on this page.");
+        // Check if recommendation is already shown within the last 24 hours
+        const lastShown = sessionStorage.getItem("lastRecommendationShown");
+        const now = Date.now();
+        if(lastShown && (now - parseInt(lastShown)) < (24 * 60 * 60 * 1000)){
+            console.log("Recommendation was shown within the last 24 hours.");
             return;
         }
 
@@ -309,12 +327,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const container = document.createElement("div");
         container.id = "song-recommendation-container";
         container.style.position = "fixed";
-        container.style.top = "50%";
-        container.style.left = "0";
-        container.style.transform = "translate(-100%, -50%)"; // Initially hidden off-screen
+        container.style.top = "10%";
+        container.style.right = "0";
+        container.style.transform = "translateX(100%)"; // Initially hidden off-screen to the right
         container.style.transition = "transform 0.5s ease";
         container.style.zIndex = "1001";
         container.style.cursor = "pointer";
+        container.style.width = "350px"; // Set a fixed width
+        container.style.boxSizing = "border-box";
 
         // Create recommendation card
         const card = document.createElement("div");
@@ -322,11 +342,11 @@ document.addEventListener("DOMContentLoaded", function() {
         card.style.backgroundColor = "#242424"; // Updated background color
         card.style.padding = "20px";
         card.style.borderRadius = "10px";
-        card.style.width = "400px"; // Increased size
+        card.style.width = "100%"; // Full width of container
         card.style.color = "#FFFFFF";
         card.style.display = "flex";
-        card.style.flexDirection = "row";
-        card.style.alignItems = "center";
+        card.style.flexDirection = "column"; // Column layout for business card style
+        card.style.alignItems = "flex-start";
         card.style.boxShadow = "2px 2px 10px rgba(0, 0, 0, 0.3)";
         card.style.transition = "transform 0.3s ease, width 0.3s ease";
         card.style.position = "relative";
@@ -341,20 +361,30 @@ document.addEventListener("DOMContentLoaded", function() {
         closeBtn.style.fontSize = "24px";
         closeBtn.style.cursor = "pointer";
         closeBtn.style.color = "#FFFFFF";
-        closeBtn.title = "Close Recommendation";
+        closeBtn.title = "Закрыть рекомендацию";
         closeBtn.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent triggering container's click
             document.body.removeChild(container);
-            sessionStorage.setItem("songRecommendationShown", "true");
+            sessionStorage.setItem("lastRecommendationShown", now.toString());
             console.log("Recommendation closed by user.");
         });
 
         // Informative message
         const infoMessage = document.createElement("p");
-        infoMessage.textContent = "We think you'll like this!";
+        infoMessage.textContent = "Мы думаем, вам понравится:";
         infoMessage.style.margin = "0 0 10px 0";
-        infoMessage.style.fontSize = "14px";
+        infoMessage.style.fontSize = "16px";
         infoMessage.style.color = "#AAAAAA";
+        infoMessage.style.alignSelf = "center";
+        infoMessage.style.width = "100%";
+        infoMessage.style.textAlign = "center";
+
+        // Song details container
+        const details = document.createElement("div");
+        details.style.display = "flex";
+        details.style.flexDirection = "row";
+        details.style.alignItems = "center";
+        details.style.width = "100%";
 
         // Song image
         const img = document.createElement("img");
@@ -366,12 +396,11 @@ document.addEventListener("DOMContentLoaded", function() {
         img.style.borderRadius = "10px";
         img.style.marginRight = "15px";
 
-        // Song details container
-        const details = document.createElement("div");
-        details.style.flexGrow = "1";
-        details.style.display = "flex";
-        details.style.flexDirection = "column";
-        details.style.justifyContent = "center";
+        // Song details text
+        const textDetails = document.createElement("div");
+        textDetails.style.display = "flex";
+        textDetails.style.flexDirection = "column";
+        textDetails.style.justifyContent = "center";
 
         // Song title
         const title = document.createElement("h3");
@@ -394,17 +423,17 @@ document.addEventListener("DOMContentLoaded", function() {
         buttonsDiv.style.marginTop = "10px";
 
         /**
-         * Helper function to create styled link buttons.
+         * Helper function to create styled link buttons with icons.
          * @param {string} url - The URL the button should link to.
          * @param {string} text - The display text of the button.
          * @param {string} bgColor - The background color of the button.
-         * @returns {HTMLElement} - The created anchor element styled as a button.
+         * @param {string} iconUrl - The URL of the icon image.
+         * @returns {HTMLElement} - The created anchor element styled as a button with an icon.
          */
-        function createLinkButton(url, text, bgColor){
+        function createLinkButton(url, text, bgColor, iconUrl){
             const link = document.createElement("a");
             link.href = url;
             link.target = "_blank";
-            link.textContent = text;
             link.style.backgroundColor = bgColor;
             link.style.color = "#FFFFFF";
             link.style.padding = "8px 12px";
@@ -413,40 +442,61 @@ document.addEventListener("DOMContentLoaded", function() {
             link.style.fontSize = "12px";
             link.style.textAlign = "center";
             link.style.flex = "1 1 auto";
+            link.style.display = "flex";
+            link.style.alignItems = "center";
+            link.style.justifyContent = "center";
+
+            if(iconUrl){
+                const img = document.createElement("img");
+                img.src = iconUrl;
+                img.alt = text;
+                img.style.width = "20px";
+                img.style.height = "20px";
+                img.style.marginRight = "8px";
+                link.appendChild(img);
+            }
+
+            const span = document.createElement("span");
+            span.textContent = text;
+            link.appendChild(span);
+
             return link;
         }
 
-        // Add link buttons if URLs are present
+        // Add link buttons with icons if URLs are present
         if(recommendedSong.playlist){
-            const playlistLink = createLinkButton(recommendedSong.playlist, "Playlist", "#be3c10");
+            const playlistLink = createLinkButton(recommendedSong.playlist, "Playlist", "#be3c10", "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png"); // YouTube Icon
             buttonsDiv.appendChild(playlistLink);
         }
         if(recommendedSong.spotify){
-            const spotifyLink = createLinkButton(recommendedSong.spotify, "Spotify", "#1DB954");
+            const spotifyLink = createLinkButton(recommendedSong.spotify, "Spotify", "#1DB954", "https://static.tildacdn.com/tild3066-3236-4166-b833-323236643035/5.png"); // Spotify Icon
             buttonsDiv.appendChild(spotifyLink);
         }
         if(recommendedSong.appleMusic){
-            const appleLink = createLinkButton(recommendedSong.appleMusic, "Apple Music", "#FA233B");
+            const appleLink = createLinkButton(recommendedSong.appleMusic, "Apple Music", "#FA233B", "https://static.tildacdn.com/tild3962-3032-4035-b862-643064333464/1.png"); // Apple Music Icon
             buttonsDiv.appendChild(appleLink);
         }
         if(recommendedSong.youtube){
-            const youtubeLink = createLinkButton(recommendedSong.youtube, "YouTube", "#FF0000");
+            const youtubeLink = createLinkButton(recommendedSong.youtube, "YouTube", "#FF0000", "https://static.tildacdn.com/tild3363-6131-4534-a233-356139653132/2.png"); // YouTube Icon
             buttonsDiv.appendChild(youtubeLink);
         }
         if(recommendedSong.pageUrl){
-            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Website", "#007BFF");
+            const pageLink = createLinkButton(recommendedSong.pageUrl, "See on Website", "#007BFF", null); // No icon for website link
             buttonsDiv.appendChild(pageLink);
         }
 
-        // Append title and motto to details
-        details.appendChild(title);
-        details.appendChild(motto);
-        details.appendChild(buttonsDiv);
+        // Append title and motto to textDetails
+        textDetails.appendChild(title);
+        textDetails.appendChild(motto);
+        textDetails.appendChild(buttonsDiv);
 
-        // Append info message, image, and details to card
+        // Append image and textDetails to details
+        details.appendChild(img);
+        details.appendChild(textDetails);
+
+        // Append elements to card
         card.appendChild(closeBtn);
         card.appendChild(infoMessage);
-        card.appendChild(img);
         card.appendChild(details);
 
         // Append card to container
@@ -457,7 +507,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Trigger the slide-in animation after a slight delay to ensure transition
         setTimeout(() => {
-            container.style.transform = "translate(0, -50%)"; // Slide in
+            container.style.transform = "translateX(0)"; // Slide in
         }, 100); // 100ms delay
 
         /**
@@ -467,15 +517,15 @@ document.addEventListener("DOMContentLoaded", function() {
         container.addEventListener("click", function(){
             if(container.classList.contains("expanded")){
                 // Collapse the card back to partial view
-                container.style.transform = "translate(-100%, -50%)";
+                container.style.transform = "translateX(100%)";
                 container.classList.remove("expanded");
                 // Reset card styles to original state
-                card.style.flexDirection = "row";
-                card.style.width = "400px";
+                card.style.flexDirection = "column";
+                card.style.width = "350px";
                 infoMessage.style.display = "block";
             } else {
                 // Expand the card fully into view
-                container.style.transform = "translate(0, -50%)";
+                container.style.transform = "translateX(0)";
                 container.classList.add("expanded");
                 // Modify styles for expanded view
                 card.style.flexDirection = "column";
@@ -489,8 +539,8 @@ document.addEventListener("DOMContentLoaded", function() {
             event.stopPropagation();
         });
 
-        // Set flag to not show recommendation again on this page
-        sessionStorage.setItem("songRecommendationShown", "true");
+        // Set flag to not show recommendation again within 24 hours
+        sessionStorage.setItem("lastRecommendationShown", now.toString());
         console.log("Recommendation shown:", recommendedSong.title);
     }
 
@@ -531,7 +581,7 @@ document.addEventListener("DOMContentLoaded", function() {
      * This allows recommendations to be shown again after a day.
      */
     function resetRecommendationFlag(){
-        sessionStorage.removeItem("songRecommendationShown");
+        sessionStorage.removeItem("lastRecommendationShown");
         console.log("Recommendation flag reset.");
     }
 
