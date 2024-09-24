@@ -898,11 +898,11 @@ const songs = [
     "spiritualNeeds": " Facing overwhelming odds, need for trust in God's deliverance, desire for victory over enemies",
     "motto": " \"When God fights your battles, victory is assured!\"",
     "keywords": " protection, rescue, faithfulness, victory, deliverance, divine intervention, hope, salvation, trust, power, providence, triumph ",
-    "playlist": null,
-    "appleMusic": null,
-    "spotify": null,
-    "youtube": null,
-    "pageUrl": null,
+    "playlist": "https://www.youtube.com/playlist?list=PLck0FjnEKceJoucos8aafA0K87DWJRk1V",
+    "appleMusic": "https://music.apple.com/us/album/the-deliverance-of-jerusalem-single/1767226507",
+    "spotify": "https://open.spotify.com/album/6AEerYv7rDdRGvUwMyasvS",
+    "youtube": "https://youtu.be/oEfVgoTvr6A",
+    "pageUrl": "https://lionheartrevival.com/the-deliverance-of-jerusalem",
     "coverImage": "https://d3flpus5evl89n.cloudfront.net/66e714e4cef46462a8685874/66e72c42cef46462a8686469/scaled_640.jpg"
   },
   {
