@@ -134,11 +134,11 @@ const songs = [
     "spiritualNeeds": " At a crossroads, need for direction, desire for meaningful life",
     "motto": " \"Your eternal future hangs in the balance!\"",
     "keywords": " decision, crossroads, destiny, future, purpose, meaning, direction, path, consequences, opportunity, growth, transformation ",
-    "playlist": null,
-    "appleMusic": null,
-    "spotify": null,
-    "youtube": null,
-    "pageUrl": null,
+    "playlist": "https://www.youtube.com/watch?v=FoLfWtmY8wY&list=PLck0FjnEKceKhKKQLzOeFTSNZc0FOB0WK",
+    "appleMusic": "http://itunes.apple.com/album/id/1765847540",
+    "spotify": "https://open.spotify.com/album/57ePpZYkuegugxm2qHHcfR?si=8lJy9Ux4TA-Cfc4pVCRdng",
+    "youtube": "https://youtu.be/FoLfWtmY8wY",
+    "pageUrl": "https://lionheartrevival.com/choose-life",
     "coverImage": "https://d3flpus5evl89n.cloudfront.net/66e714e4cef46462a8685874/66e72e31cef46462a8686576/scaled_640.jpg"
   },
     {
