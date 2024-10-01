@@ -1138,11 +1138,11 @@ const songs = [
     "spiritualNeeds": " Facing giants in life, need for courage, desire to trust God's power",
     "motto": " \"Slay your giants with shepherd-sized faith!\"",
     "keywords": " trust, victory, power, confidence, guidance, protection, provision, care, assurance, hope, courage, reliance ",
-    "playlist": null,
-    "appleMusic": null,
-    "spotify": null,
-    "youtube": null,
-    "pageUrl": null,
+    "playlist": "https://www.youtube.com/watch?v=oEfVgoTvr6A&list=PLck0FjnEKceJoucos8aafA0K87DWJRk1V",
+    "appleMusic": "https://music.apple.com/us/album/the-shepherd-s-faith-single/1767120831",
+    "spotify": "https://open.spotify.com/album/3WgFunLCjLJCMSWwJI4pTc",
+    "youtube": "https://youtu.be/ax05oFhVYb0",
+    "pageUrl": "https://lionheartrevival.com/the-shepherd-s-faith",
     "coverImage": "https://d3flpus5evl89n.cloudfront.net/66e714e4cef46462a8685874/66e72eabcef46462a86865e2/scaled_640.jpg"
   },
   {
@@ -1208,11 +1208,11 @@ const songs = [
     "spiritualNeeds": " Seeking stability in life, need for strong foundation, desire for assurance in Christ",
     "motto": " \"Build your life on unshakeable ground!\"",
     "keywords": " foundation, answer, stability, truth, security, reliability, strength, assurance, confidence, faith, dependability, cornerstone ",
-    "playlist": null,
-    "appleMusic": null,
-    "spotify": null,
-    "youtube": null,
-    "pageUrl": null,
+    "playlist": "https://www.youtube.com/watch?v=FoLfWtmY8wY&list=PLck0FjnEKceKhKKQLzOeFTSNZc0FOB0WK",
+    "appleMusic": "https://music.apple.com/us/album/the-ultimate-rock-single/1767694960",
+    "spotify": "https://open.spotify.com/album/26kp9vMBAV3AFiMAWmMVTT",
+    "youtube": "https://www.youtube.com/watch?v=q8XBmNAgTCg",
+    "pageUrl": "https://lionheartrevival.com/the-ultimate-rock",
     "coverImage": "https://d3flpus5evl89n.cloudfront.net/66e714e4cef46462a8685874/66e72f3ecef46462a868663f/scaled_640.jpg"
   },
   {
